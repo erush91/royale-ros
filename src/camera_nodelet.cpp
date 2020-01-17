@@ -286,7 +286,7 @@ royale_ros::CameraNodelet::InitCamera()
 
                       this->xyz_pubs_.push_back(
                         this->it_->advertise(
-                          "stream/" + std::to_string(i+1) + "/xyz", 1));
+                          "stream/" + std::to_string(i+1) + "/depth", 1));
 
                       this->noise_pubs_.push_back(
                         this->it_->advertise(
@@ -1045,7 +1045,7 @@ royale_ros::CameraNodelet::onNewData(const royale::DepthData *data)
   gray_.create(data->height, data->width, CV_16UC1);
   conf_.create(data->height, data->width, CV_8UC1);
   noise_.create(data->height, data->width, CV_32FC1);
-  xyz_.create(data->height, data->width, CV_32FC3);
+  xyz_.create(data->height, data->width, CV_32FC1);
 
   std::uint16_t* gray_ptr;
   std::uint8_t* conf_ptr;
@@ -1089,9 +1089,7 @@ royale_ros::CameraNodelet::onNewData(const royale::DepthData *data)
       pt.data_c[0] = pt.data_c[1] = pt.data_c[2] = pt.data_c[3] = 0;
       pt.intensity = data->points[i].grayValue;
 
-      xyz_ptr[xyz_col] = pt.x;
-      xyz_ptr[xyz_col + 1] = pt.y;
-      xyz_ptr[xyz_col + 2] = pt.z;
+      xyz_ptr[col] = pt.x;
     }
 
   //
@@ -1105,7 +1103,7 @@ royale_ros::CameraNodelet::onNewData(const royale::DepthData *data)
     cv_bridge::CvImage(head, enc::TYPE_32FC1, noise_).toImageMsg();
   cloud_->header = pcl_conversions::toPCL(cloud_head);
   sensor_msgs::ImagePtr xyz_msg =
-    cv_bridge::CvImage(cloud_head, enc::TYPE_32FC3, xyz_).toImageMsg();
+    cv_bridge::CvImage(cloud_head, enc::TYPE_32FC1, xyz_).toImageMsg();
 
   //
   // Publish the data
